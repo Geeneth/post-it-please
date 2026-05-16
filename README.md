@@ -1,6 +1,6 @@
 # Post It Please
 
-A short-form video posting tool that lets you upload a video, write a caption, pick platforms, and publish (or schedule) across TikTok and Instagram through [Zernio](https://zernio.com). Analytics from both platforms are surfaced on the home page.
+A short-form video posting tool that lets you upload a video, write a caption, pick platforms, and publish (or schedule) across TikTok and Instagram. Everything is connected through [Zernio](https://zernio.com), which handles media storage, social publishing, and analytics — you will need a Zernio account set up before the app will work.
 
 The repo contains three independent components:
 
@@ -17,11 +17,35 @@ The repo contains three independent components:
 - **Node.js** 20+ and **npm** (for `api` and `web`)
 - **Python** 3.10+ (for `video-editor`)
 - **FFmpeg** installed and on your `$PATH` (required by the video editor)
-- A **Zernio** account with an API key and connected social accounts
+- A **Zernio** account with an API key and connected social accounts *(set this up first — see below)*
 
 ---
 
-## 1. Backend (`api/`)
+## 1. Zernio Setup
+
+All publishing and analytics run through Zernio. Set this up before configuring the backend. Zernio includes 2 connected social accounts on their free plan — you can connect more by upgrading to a paid plan.
+
+1. **Create a Zernio account** at [zernio.com](https://zernio.com).
+2. **Generate an API key** in your Zernio account settings — you'll add this to `api/.env` as `ZERNIO_API_KEY`.
+3. **Connect your social accounts** (TikTok, Instagram, etc.) inside the Zernio dashboard.
+4. **Find the account IDs** for each connected account (available in the Zernio dashboard under Connected Accounts).
+5. **Build the `ZERNIO_PLATFORM_ACCOUNT_IDS` JSON string** mapping each platform key to its account ID — you'll add this to `api/.env` too. Example:
+
+```bash
+ZERNIO_PLATFORM_ACCOUNT_IDS={"tiktok":"12345","instagram":"67890"}
+```
+
+The platform keys must match what the frontend sends (`tiktok`, `instagram`). If a platform is selected in the UI but has no matching entry in this map, the backend will return a `400` error.
+
+### Zernio publish flow (for reference)
+
+1. `POST /media/presign` — backend requests a presigned upload URL from Zernio.
+2. `PUT <uploadUrl>` — backend streams the video bytes directly to Zernio's storage.
+3. `POST /posts` — backend creates the post with content, media reference, platform account IDs, timezone, and either `scheduledFor` or `publishNow: true`.
+
+---
+
+## 2. Backend (`api/`)
 
 The NestJS backend receives a multipart upload from the frontend, presigns a Zernio media upload, pushes the file to storage, and creates a Zernio post. It also fetches TikTok and Instagram analytics from Zernio and returns them to the frontend.
 
@@ -61,21 +85,9 @@ The API runs at `http://localhost:4000`.
 
 > **Development mode:** When `NODE_ENV=development`, the analytics endpoint returns randomly generated fake data so you can develop the frontend without needing live Zernio credentials. Set `NODE_ENV=production` (or remove it) to fetch real data.
 
-### Environment variables
-
-| Variable | Required | Default | Description |
-|---|---|---|---|
-| `PORT` | No | `4000` | Port the API listens on |
-| `FRONTEND_URL` | No | `http://localhost:3000` | Allowed CORS origin |
-| `NODE_ENV` | No | — | Set to `development` for fake analytics data |
-| `ZERNIO_API_KEY` | **Yes** | — | Your Zernio API key |
-| `ZERNIO_BASE_URL` | No | `https://zernio.com/api/v1` | Zernio API base URL |
-| `ZERNIO_TIMEZONE` | No | `UTC` | Timezone sent on post creation |
-| `ZERNIO_PLATFORM_ACCOUNT_IDS` | **Yes** | — | JSON object mapping platform names to Zernio account IDs |
-
 ---
 
-## 2. Frontend (`web/`)
+## 3. Frontend (`web/`)
 
 The Next.js frontend provides the upload form (video file, caption, platform selection, optional schedule) and an analytics dashboard showing views, likes, comments, and shares for TikTok and Instagram.
 
@@ -103,37 +115,7 @@ npm run dev
 
 The app runs at `http://localhost:3000`.
 
-### Environment variables
-
-| Variable | Required | Default | Description |
-|---|---|---|---|
-| `NEXT_PUBLIC_API_URL` | No | `http://localhost:4000` | URL of the backend API |
-
 > Do **not** put `ZERNIO_API_KEY` in the frontend. All Zernio calls go through the backend.
-
----
-
-## 3. Zernio Setup
-
-Zernio is the third-party service that handles social media publishing and analytics. Before the backend can post or fetch data, you need to:
-
-1. **Create a Zernio account** at [zernio.com](https://zernio.com).
-2. **Generate an API key** in your Zernio account settings and set it as `ZERNIO_API_KEY` in `api/.env`.
-3. **Connect your social accounts** (TikTok, Instagram, etc.) inside the Zernio dashboard.
-4. **Find the account IDs** for each connected account (available in the Zernio dashboard under Connected Accounts).
-5. **Build the `ZERNIO_PLATFORM_ACCOUNT_IDS` JSON string** mapping each platform key to its account ID and add it to `api/.env`. Example:
-
-```bash
-ZERNIO_PLATFORM_ACCOUNT_IDS={"tiktok":"12345","instagram":"67890"}
-```
-
-The platform keys must match what the frontend sends (`tiktok`, `instagram`). If a platform is selected in the UI but has no matching entry in this map, the backend will return a `400` error.
-
-### Zernio publish flow (for reference)
-
-1. `POST /media/presign` — backend requests a presigned upload URL from Zernio.
-2. `PUT <uploadUrl>` — backend streams the video bytes directly to Zernio's storage.
-3. `POST /posts` — backend creates the post with content, media reference, platform account IDs, timezone, and either `scheduledFor` or `publishNow: true`.
 
 ---
 
