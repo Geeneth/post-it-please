@@ -9,7 +9,6 @@ export type PlatformValue =
 export interface PlatformOption {
   label: string;
   value: PlatformValue;
-  disabled?: boolean;
 }
 
 export interface CreatePostInput {

@@ -15,10 +15,10 @@ import type { PlatformOption, PostResponse } from '@/types/post';
 const platformOptions: PlatformOption[] = [
   { label: 'TikTok', value: 'tiktok' },
   { label: 'Instagram Reels', value: 'instagram' },
-  { label: 'YouTube Shorts', value: 'youtube', disabled: true },
-  { label: 'X', value: 'twitter', disabled: true },
-  { label: 'LinkedIn', value: 'linkedin', disabled: true },
-  { label: 'Facebook', value: 'facebook', disabled: true },
+  { label: 'YouTube Shorts', value: 'youtube' },
+  { label: 'X', value: 'twitter' },
+  { label: 'LinkedIn', value: 'linkedin' },
+  { label: 'Facebook', value: 'facebook' },
 ];
 
 export function PostForm() {
@@ -142,31 +142,20 @@ export function PostForm() {
                     key={platform.value}
                     className={cn(
                       'flex min-h-14 items-center gap-3 rounded-lg border-2 px-3 py-2 text-sm font-black transition-colors',
-                      platform.disabled
-                        ? 'border-[#9b9b9b] bg-[#e0dfd7] text-[#777] opacity-70 grayscale'
-                        : platforms.includes(platform.value)
-                          ? 'border-grape bg-[#ffaf22] text-grape shadow-[4px_4px_0_#3b1287]'
-                          : 'border-grape bg-field text-grape shadow-[4px_4px_0_#d8ad00] hover:bg-white',
+                      platforms.includes(platform.value)
+                        ? 'border-grape bg-[#ffaf22] text-grape shadow-[4px_4px_0_#3b1287]'
+                        : 'border-grape bg-field text-grape shadow-[4px_4px_0_#d8ad00] hover:bg-white',
                     )}
                   >
                     <Checkbox
                       id={checkboxId}
                       checked={platforms.includes(platform.value)}
-                      disabled={platform.disabled}
                       onCheckedChange={(checked) =>
                         setPlatformSelected(platform.value, checked === true)
                       }
                       className="border-2 border-grape data-[state=checked]:bg-grape data-[state=checked]:text-white"
                     />
-                    <Label
-                      htmlFor={checkboxId}
-                      className={cn(
-                        'flex-1',
-                        platform.disabled
-                          ? 'cursor-not-allowed text-slate-400'
-                          : 'cursor-pointer',
-                      )}
-                    >
+                    <Label htmlFor={checkboxId} className="flex-1 cursor-pointer">
                       {platform.label}
                     </Label>
                   </div>
